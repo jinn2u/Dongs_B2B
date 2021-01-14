@@ -1,12 +1,11 @@
-import { Query, Resolver } from "@nestjs/graphql";
+import { Args, Query, Resolver } from "@nestjs/graphql";
+import { Restaurant } from "./entities/restaurant.entity";
 
 
 @Resolver()
 export class RestaurantsResolver{
-    @Query(returns =>Boolean)
-    isPizzaGood():Boolean {
-        return true
+    @Query(() => [Restaurant])
+    restaurants(@Args('veganOnly')veganOnly:Boolean ):Restaurant[] {
+        return []
     }
-    //Query데코레이터는 typeFunc를 받는다. 
-    // 이는 query가 return하고자 하는 type을 return하는 function이어야 한다.
 }
