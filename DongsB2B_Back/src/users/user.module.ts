@@ -4,9 +4,10 @@ import { Module } from '@nestjs/common';
  import { UserResolver } from './users.resolver';
  import { UserService } from './user.service';
 import { ConfigService } from '@nestjs/config';
+import { JwtModule } from 'src/jwt/jwt.module';
 
 @Module({
-    imports:[TypeOrmModule.forFeature([User]), ConfigService],
+    imports:[TypeOrmModule.forFeature([User])],
     providers:[UserResolver,UserService]
 })
 export class UsersModule {
