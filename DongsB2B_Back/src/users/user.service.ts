@@ -38,16 +38,20 @@ export class UserService {
             if(!user){
                 return {ok: false, error: "사용자를 찾을 수 없습니다."}
             }
+            // 비밀번호 검증하기 
             const validatePassword = await user.checkPassword(password)
             if(!validatePassword){
                 return {ok:false, error:"비밀번호가 잘못되었습니다."}
             }
+            // JWT token을 만든 후 사용자에게 준다.
             const token = this.jwtService.sign(user.id)
             return{ok: true, token}
         }catch(error) { 
             return{ok: false, error}
         }
-// 비밀번호 검증하기 
-// JWT token을 만든 후 사용자에게 준다.
+    }
+    
+    async findById(id: number): Promise<User>{
+        return this.users.findOne({id})
     }
 }
