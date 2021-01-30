@@ -6,6 +6,7 @@ import { LoginInput } from "./dtos/login.dto";
 import { User } from "./entities/user.entity";
 import { ConfigService } from "@nestjs/config";
 import { JwtService } from "src/jwt/jwt.service";
+import { EditProfileInput } from "./dtos/edit-profile.dto";
 
 @Injectable()
 export class UserService {
@@ -53,5 +54,20 @@ export class UserService {
     
     async findById(id: number): Promise<User>{
         return this.users.findOne({id})
+    }
+
+    async editProfile(id: number, {email, password}: EditProfileInput): Promise<User>{
+        // users.update()를 하게 된다면 entity가 있는지 확인하지 않고 바로 db에쿼리를 전송하기 때문에 user entity의 BeforeUpdate()가 실행되지 않는다. 
+        // 따라서findOne()을 통하여 user를 찾은 다음 save()를 통하여 BeforeUpdate 데코레이터를 실행한다.
+        const user = await this.users.findOne(id)
+        console.log(user)
+        if(email){
+            user.email = email
+        }
+        if(password){
+            user.password = password
+        }
+        console.log(user)
+        return this.users.save(user)
     }
 }
