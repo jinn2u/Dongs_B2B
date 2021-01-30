@@ -4,7 +4,6 @@ import { Repository } from "typeorm";
 import { CreateAccountInput } from "./dtos/createAccount.dto";
 import { LoginInput } from "./dtos/login.dto";
 import { User } from "./entities/user.entity";
-import { ConfigService } from "@nestjs/config";
 import { JwtService } from "src/jwt/jwt.service";
 import { EditProfileInput } from "./dtos/edit-profile.dto";
 
