@@ -6,7 +6,9 @@ import { CreateAccountInput, CreateAccountOutput } from "./dtos/createAccount.dt
 import { EditProfileInput, EditProfileOutput } from "./dtos/edit-profile.dto";
 import { LoginInput, LoginOutput } from "./dtos/login.dto";
 import { UserProfileInput, UserProfileOutput } from "./dtos/user-profile.dto";
+import { VertifyEmailInput, VertifyEmailOutput } from "./dtos/vertify-email.dto";
 import { User } from "./entities/user.entity";
+import { Vertification } from "./entities/vertification.entity";
 import { UserService } from "./user.service";
 
 @Resolver(()=> User)
@@ -23,7 +25,7 @@ export class UserResolver{
         }
     }
     // 로그인
-    @Mutation(()=> LoginOutput)
+    @Query(()=> LoginOutput)
     async login(@Args('input') loginInput: LoginInput): Promise<LoginOutput>{
         try{
             return this.userService.login(loginInput)
@@ -76,5 +78,13 @@ export class UserResolver{
             }
         }
     }
-
+    @Mutation(()=>VertifyEmailOutput)
+    async vertifyEmail(@Args('input'){code}: VertifyEmailInput): Promise<VertifyEmailOutput>{
+        try{
+            await this.userService.vertifyEmail(code)
+            return {ok: true}
+        }catch(e){
+            return{ok: false, error: e}
+        }
+    }
 }

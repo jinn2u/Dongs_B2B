@@ -6,11 +6,13 @@ import { LoginInput } from "./dtos/login.dto";
 import { User } from "./entities/user.entity";
 import { JwtService } from "src/jwt/jwt.service";
 import { EditProfileInput } from "./dtos/edit-profile.dto";
+import { Vertification } from "./entities/vertification.entity";
 
 @Injectable()
 export class UserService {
     constructor(
         @InjectRepository(User) private readonly users: Repository<User>,
+        @InjectRepository(Vertification) private readonly vertifications: Repository<Vertification>,
         private readonly jwtService: JwtService
     ){} 
     async createAccount({email, password, role}: CreateAccountInput): Promise<{ok: boolean, error?: string}>{
@@ -23,7 +25,10 @@ export class UserService {
                 return {ok: false, error: "이메일을 가지고 있는 사용자가 존재합니다."}
             }
             //존재하지 않을 경우
-            await this.users.save(this.users.create({email, password, role}))
+            const user = await this.users.save(this.users.create({email, password, role}))
+            await this.vertifications.save(this.vertifications.create({
+                user
+            }))
             return {ok: true}
         }catch(e){
             return {ok: false, error: "계정을 생성할수 없습니다."}
@@ -34,7 +39,7 @@ export class UserService {
     async login({email, password}: LoginInput): Promise<{ok: boolean, error?: string, token?: string}>{
 //  이메일을 가진 사용자를 찾는다.
         try{
-            const user = await this.users.findOne({email})
+            const user = await this.users.findOne({email},{select:['id','password']})
             if(!user){
                 return {ok: false, error: "사용자를 찾을 수 없습니다."}
             }
@@ -44,6 +49,7 @@ export class UserService {
                 return {ok:false, error:"비밀번호가 잘못되었습니다."}
             }
             // JWT token을 만든 후 사용자에게 준다.
+            console.log(user)
             const token = this.jwtService.sign(user.id)
             return{ok: true, token}
         }catch(error) { 
@@ -62,11 +68,26 @@ export class UserService {
         console.log(user)
         if(email){
             user.email = email
+            await this.vertifications.save(this.vertifications.create({user}))
         }
         if(password){
             user.password = password
         }
-        console.log(user)
         return this.users.save(user)
+    }
+    async vertifyEmail(code: string): Promise<Boolean>{
+        try{
+            const vertification = await this.vertifications.findOne({code},{relations: ['user']})
+            if(vertification){
+                vertification.user.vertified = true
+                this.users.save(vertification.user)
+                return true
+            }
+            throw new Error()
+        }
+        catch(e){
+            console.error(e)
+            return false
+        }
     }
 }
