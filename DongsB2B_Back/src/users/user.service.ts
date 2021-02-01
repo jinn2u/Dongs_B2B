@@ -2,11 +2,13 @@ import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { CreateAccountInput } from "./dtos/createAccount.dto";
-import { LoginInput } from "./dtos/login.dto";
+import { LoginInput, LoginOutput } from "./dtos/login.dto";
 import { User } from "./entities/user.entity";
 import { JwtService } from "src/jwt/jwt.service";
-import { EditProfileInput } from "./dtos/edit-profile.dto";
+import { EditProfileInput, EditProfileOutput } from "./dtos/edit-profile.dto";
 import { Vertification } from "./entities/vertification.entity";
+import { UserProfileOutput } from "./dtos/user-profile.dto";
+import { VertifyEmailOutput } from "./dtos/vertify-email.dto";
 
 @Injectable()
 export class UserService {
@@ -19,7 +21,6 @@ export class UserService {
         // 새로운 사용자인지 확인한다.
         try{
             const exists = await this.users.findOne({email})
-            
             //사용자가 존재한다면 
             if(exists){
                 return {ok: false, error: "이메일을 가지고 있는 사용자가 존재합니다."}
@@ -32,11 +33,11 @@ export class UserService {
             return {ok: true}
         }catch(e){
             return {ok: false, error: "계정을 생성할수 없습니다."}
-        }
-        
+        } 
     }
+    
 
-    async login({email, password}: LoginInput): Promise<{ok: boolean, error?: string, token?: string}>{
+    async login({email, password}: LoginInput): Promise<LoginOutput>{
 //  이메일을 가진 사용자를 찾는다.
         try{
             const user = await this.users.findOne({email},{select:['id','password']})
@@ -44,50 +45,61 @@ export class UserService {
                 return {ok: false, error: "사용자를 찾을 수 없습니다."}
             }
             // 비밀번호 검증하기 
-            const validatePassword = await user.checkPassword(password)
-            if(!validatePassword){
+            const correctPassword = await user.checkPassword(password)
+            if(!correctPassword){
                 return {ok:false, error:"비밀번호가 잘못되었습니다."}
             }
-            // JWT token을 만든 후 사용자에게 준다.
-            console.log(user)
             const token = this.jwtService.sign(user.id)
-            return{ok: true, token}
+            return {ok: true, token}
         }catch(error) { 
-            return{ok: false, error}
+            return {ok: false, error}
         }
     }
-    
-    async findById(id: number): Promise<User>{
-        return this.users.findOne({id})
+    // 검증해야함
+    async findById(id: number): Promise<UserProfileOutput>{
+        try{
+            const user = await this.users.findOne({id})
+            if(user){
+                return {ok: true, user: user}
+            }
+        }catch(e){
+            console.error(e)
+            return {ok: false, error:"사용자가 존재하지 않습니다."}
+        }
     }
 
-    async editProfile(id: number, {email, password}: EditProfileInput): Promise<User>{
+    async editProfile(id: number, {email, password}: EditProfileInput): Promise<EditProfileOutput>{
         // users.update()를 하게 된다면 entity가 있는지 확인하지 않고 바로 db에쿼리를 전송하기 때문에 user entity의 BeforeUpdate()가 실행되지 않는다. 
         // 따라서findOne()을 통하여 user를 찾은 다음 save()를 통하여 BeforeUpdate 데코레이터를 실행한다.
-        const user = await this.users.findOne(id)
-        console.log(user)
-        if(email){
-            user.email = email
-            await this.vertifications.save(this.vertifications.create({user}))
+        try{
+            const user = await this.users.findOne(id)
+            if(email){
+                user.email = email
+                user.vertified = false //이메일을 변경한다면 다시 메일 인증을 받도록한다.
+                await this.vertifications.save(this.vertifications.create({user}))
+            }
+            if(password){
+                user.password = password
+            }
+            await this.users.save(user)
+            return {ok: true}
+        }catch(e){
+          return { ok: false, error: "프로필을 업데이트할 수 없습니다."};
         }
-        if(password){
-            user.password = password
-        }
-        return this.users.save(user)
     }
-    async vertifyEmail(code: string): Promise<Boolean>{
+    async vertifyEmail(code: string): Promise<VertifyEmailOutput>{
         try{
             const vertification = await this.vertifications.findOne({code},{relations: ['user']})
             if(vertification){
                 vertification.user.vertified = true
                 this.users.save(vertification.user)
-                return true
+                return {ok:true}
             }
-            throw new Error()
+            return {ok: false, error: "올바른 인증이 아닙니다."}
         }
         catch(e){
             console.error(e)
-            return false
+            return {ok: false, error: e}
         }
     }
 }
