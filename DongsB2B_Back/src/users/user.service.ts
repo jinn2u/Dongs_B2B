@@ -9,13 +9,15 @@ import { EditProfileInput, EditProfileOutput } from "./dtos/edit-profile.dto";
 import { Vertification } from "./entities/vertification.entity";
 import { UserProfileOutput } from "./dtos/user-profile.dto";
 import { VertifyEmailOutput } from "./dtos/vertify-email.dto";
+import { MailService } from "src/mail/mail.service";
 
 @Injectable()
 export class UserService {
     constructor(
         @InjectRepository(User) private readonly users: Repository<User>,
         @InjectRepository(Vertification) private readonly vertifications: Repository<Vertification>,
-        private readonly jwtService: JwtService
+        private readonly jwtService: JwtService,
+        private readonly mailService: MailService
     ){} 
     async createAccount({email, password, role}: CreateAccountInput): Promise<{ok: boolean, error?: string}>{
         // 새로운 사용자인지 확인한다.
@@ -27,9 +29,10 @@ export class UserService {
             }
             //존재하지 않을 경우
             const user = await this.users.save(this.users.create({email, password, role}))
-            await this.vertifications.save(this.vertifications.create({
+            const vertification = await this.vertifications.save(this.vertifications.create({
                 user
             }))
+            this.mailService.sendVertificationEmail(user.email,vertification.code)
             return {ok: true}
         }catch(e){
             return {ok: false, error: "계정을 생성할수 없습니다."}
@@ -55,7 +58,7 @@ export class UserService {
             return {ok: false, error}
         }
     }
-    // 검증해야함
+    //jwt토큰으로 
     async findById(id: number): Promise<UserProfileOutput>{
         try{
             const user = await this.users.findOne({id})
@@ -76,8 +79,9 @@ export class UserService {
             if(email){
                 user.email = email
                 user.vertified = false //이메일을 변경한다면 다시 메일 인증을 받도록한다.
-                await this.vertifications.save(this.vertifications.create({user}))
-            }
+                const vertification = await this.vertifications.save(this.vertifications.create({user}))
+                this.mailService.sendVertificationEmail(user.email,vertification.code)
+        }
             if(password){
                 user.password = password
             }
@@ -93,7 +97,7 @@ export class UserService {
             if(vertification){
                 vertification.user.vertified = true
                 this.users.save(vertification.user)
-                return {ok:true}
+            return {ok:true}
             }
             return {ok: false, error: "올바른 인증이 아닙니다."}
         }
