@@ -25,7 +25,7 @@ export class UserResolver{
     async login(@Args('input') loginInput: LoginInput): Promise<LoginOutput>{
         return this.userService.login(loginInput)
     }
-    // 내가 누구인지를 보여준다.
+    // 내가 누구인지를 보여준다 .
     @Query(()=>User)
     @UseGuards(AuthGuard)
     me(@AuthUser() authUser: User){

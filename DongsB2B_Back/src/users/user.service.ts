@@ -32,7 +32,7 @@ export class UserService {
             const vertification = await this.vertifications.save(this.vertifications.create({
                 user
             }))
-            this.mailService.sendVertificationEmail(user.email,vertification.code)
+            this.mailService.sendVerificationEmail(user.email, vertification.code)
             return {ok: true}
         }catch(e){
             return {ok: false, error: "계정을 생성할수 없습니다."}
@@ -80,7 +80,7 @@ export class UserService {
                 user.email = email
                 user.vertified = false //이메일을 변경한다면 다시 메일 인증을 받도록한다.
                 const vertification = await this.vertifications.save(this.vertifications.create({user}))
-                this.mailService.sendVertificationEmail(user.email,vertification.code)
+                this.mailService.sendVerificationEmail(user.email,vertification.code)
         }
             if(password){
                 user.password = password
