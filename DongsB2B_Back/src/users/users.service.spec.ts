@@ -16,6 +16,10 @@ const mockJwtService = {
     vertify: jest.fn(),
 }
 
+const mockMailService = {
+    sendVerificationEmail: jest.fn()
+}
+
 describe("UserService", () => { 
     let service: UserService
     beforeAll(async ()=> {

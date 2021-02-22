@@ -18,7 +18,7 @@ export class UserService {
         @InjectRepository(Vertification) private readonly vertifications: Repository<Vertification>,
         private readonly jwtService: JwtService,
         private readonly mailService: MailService
-    ){} 
+    ){}
     async createAccount({email, password, role}: CreateAccountInput): Promise<{ok: boolean, error?: string}>{
         // 새로운 사용자인지 확인한다.
         try{
@@ -38,10 +38,9 @@ export class UserService {
             return {ok: false, error: "계정을 생성할수 없습니다."}
         } 
     }
-    
 
     async login({email, password}: LoginInput): Promise<LoginOutput>{
-//  이메일을 가진 사용자를 찾는다.
+    // 이메일을 가진 사용자를 찾는다.
         try{
             const user = await this.users.findOne({email},{select:['id','password']})
             if(!user){
@@ -58,6 +57,7 @@ export class UserService {
             return {ok: false, error}
         }
     }
+    
     //jwt토큰으로 
     async findById(id: number): Promise<UserProfileOutput>{
         try{
