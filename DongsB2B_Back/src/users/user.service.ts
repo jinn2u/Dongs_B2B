@@ -61,12 +61,10 @@ export class UserService {
     //jwt토큰으로 
     async findById(id: number): Promise<UserProfileOutput>{
         try{
-            const user = await this.users.findOne({id})
-            if(user){
-                return {ok: true, user: user}
-            }
+            const user = await this.users.findOneOrFail({id})
+            return {ok: true, user}
         }catch(e){
-            console.error(e)
+            // console.error(e)
             return {ok: false, error:"사용자가 존재하지 않습니다."}
         }
     }
@@ -96,14 +94,15 @@ export class UserService {
             const vertification = await this.vertifications.findOne({code},{relations: ['user']})
             if(vertification){
                 vertification.user.vertified = true
-                this.users.save(vertification.user)
+                await this.users.save(vertification.user)
+                await this.vertifications.delete(vertification.id)
             return {ok:true}
             }
             return {ok: false, error: "올바른 인증이 아닙니다."}
         }
         catch(e){
             console.error(e)
-            return {ok: false, error: e}
+            return {ok: false, error: "메일 인증을 할 수 없습니다."}
         }
     }
 }

@@ -1,8 +1,12 @@
 import { Test } from "@nestjs/testing"
 import { getRepositoryToken } from "@nestjs/typeorm"
+import { DESTRUCTION } from "dns"
+import { object } from "joi"
 import { JwtService } from "src/jwt/jwt.service"
 import { MailService } from "src/mail/mail.service"
 import { Repository } from "typeorm"
+import { isJsxText } from "typescript"
+import { VertifyEmailInput, VertifyEmailOutput } from "./dtos/vertify-email.dto"
 import { User } from "./entities/user.entity"
 import { Vertification } from "./entities/vertification.entity"
 import { UserService } from "./user.service"
@@ -10,7 +14,9 @@ import { UserService } from "./user.service"
 const mockRepository = () => ({
     findOne: jest.fn(),
     save: jest.fn(),
-    create: jest.fn()
+    create: jest.fn(),
+    findOneOrFail: jest.fn(),
+    delete: jest.fn()
 })
 const mockJwtService = {
     sign: jest.fn(()=> 'signed-token'),
@@ -140,8 +146,106 @@ describe("UserService", () => {
             expect(jwtService.sign).toHaveBeenCalledWith(expect.any(Number))
             expect(result).toEqual({ok: true, token: 'signed-token'})
         })
+        it('should fail on exception', async () => {
+            usersRepository.findOne.mockRejectedValue(false)
+            const result = await service.login(loginArgs)
+            expect(result).toEqual({ok: false, error: false})
+        })
     }) 
-    it.todo('findById')
-    it.todo('editProfile')
-    it.todo('vertifyEmail')
+    describe('findById', () => {
+        const findByIdArgs = {
+            id: 1
+        }
+        it('should find an existing user', async() => {
+            usersRepository.findOneOrFail.mockResolvedValue(findByIdArgs)
+            const result = await service.findById(1)
+            expect(result).toEqual({ok: true, user: findByIdArgs})
+        })
+        it('should fail if no user found', async() => {
+            usersRepository.findOneOrFail.mockRejectedValue(new Error())
+            const result = await service.findById(1)
+            expect(result).toEqual({ok: false, error:"사용자가 존재하지 않습니다."})
+        })
+        it('should fail on exception', async () => {
+            usersRepository.findOneOrFail.mockRejectedValue(new Error())
+            const result = await service.findById(1)
+            expect(result).toEqual({ok: false, error:"사용자가 존재하지 않습니다."})
+        })
+    })
+    describe('editProfile', () => {
+        it('should change email', async () => {
+            const oldUser = {
+                email: "as@google.com",
+                vertified: true
+            }
+            const editProfileArgs = {
+                userId: 1,
+                input: {email: "as@google.com"},
+            }
+            const newVertification = {
+                code: 'code'
+            }
+            const newUser = {
+                email: editProfileArgs.input.email,
+                vertified: false,
+            }
+            usersRepository.findOne.mockResolvedValue(oldUser)
+            vertificationRepository.create.mockReturnValue(newVertification)
+            vertificationRepository.save.mockResolvedValue(newVertification)
+
+            await service.editProfile(editProfileArgs.userId, editProfileArgs.input)
+
+            expect(usersRepository.findOne).toHaveBeenCalledWith(editProfileArgs.userId)
+            expect(usersRepository.findOne).toHaveBeenCalledTimes(1)
+            expect(vertificationRepository.create).toHaveBeenCalledWith({user:newUser})
+            expect(vertificationRepository.save).toHaveBeenCalledWith(newVertification)
+            expect(mailService.sendVerificationEmail).toHaveBeenCalledWith(newUser.email, newVertification.code)
+        })
+        it('should change password', async() => {
+            const editProfileArgs = {
+                userId: 1,
+                input: {password: "asd"},
+            }
+            usersRepository.findOne.mockResolvedValue({password: 'old'})
+            const result = await service.editProfile(editProfileArgs.userId, editProfileArgs.input)
+            expect(usersRepository.save).toHaveBeenCalledTimes(1)
+            expect(usersRepository.save).toHaveBeenCalledWith(editProfileArgs.input)
+            expect(result).toEqual({ok: true})
+        })
+        it('should fail on exception', async() => {
+            usersRepository.findOne.mockRejectedValue(new Error())
+            const result = await service.editProfile(1,{email:'12'})
+            expect(result).toEqual({ ok: false, error: "프로필을 업데이트할 수 없습니다."})
+        })
+    })
+    describe('vertifyEmail', () => {
+        it('should vertify email', async() => {
+            const mockedVertification = {
+                user: {
+                    vertified: false
+                },
+                id: 1
+            }
+            vertificationRepository.findOne.mockResolvedValue(mockedVertification)
+            const result = await service.vertifyEmail('')
+
+            expect(vertificationRepository.findOne).toHaveBeenCalledTimes(1)
+            expect(vertificationRepository.findOne).toHaveBeenCalledWith(expect.any(Object), expect.any(Object))
+            expect(usersRepository.save).toHaveBeenCalledTimes(1)
+            expect(usersRepository.save).toHaveBeenCalledWith({vertified: true})
+            expect(vertificationRepository.delete).toHaveBeenCalledTimes(1)
+            expect(vertificationRepository.delete).toHaveBeenCalledWith(mockedVertification.id)
+            expect(result).toEqual({ok: true})
+        })
+        it('should fail on vertification not found', async() => {
+            vertificationRepository.findOne.mockResolvedValue(undefined)
+            const result = await service.vertifyEmail('')
+            expect(result).toEqual({ok: false, error: "올바른 인증이 아닙니다."})
+        })
+        it('should fail on exception', async() => {
+            vertificationRepository.findOne.mockRejectedValue(new Error())
+            const result = await service.vertifyEmail('')
+            expect(result).toEqual({ok: false, error: "메일 인증을 할 수 없습니다."})
+        })
+    })
 })   
