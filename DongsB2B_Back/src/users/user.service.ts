@@ -101,7 +101,7 @@ export class UserService {
             return {ok: false, error: "올바른 인증이 아닙니다."}
         }
         catch(e){
-            console.error(e)
+            // console.error(e)
             return {ok: false, error: "메일 인증을 할 수 없습니다."}
         }
     }
