@@ -2,9 +2,11 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
 import { AppModule } from '../src/app.module';
-import { getConnection } from 'typeorm';
+import { getConnection, Repository } from 'typeorm';
 import { parseSelectionSet } from 'graphql-tools';
 import { StringDecoder } from 'string_decoder';
+import { User } from 'src/users/entities/user.entity';
+import { getRepositoryToken } from '@nestjs/typeorm';
 
 const GRAPHQL_ENDPOINT = '/graphql'
 const testUser = {
@@ -21,13 +23,15 @@ jest.mock("got", () => {
 describe('UserModule (e2e)', () => {
   let app: INestApplication;
   let jwtToken: string
-  
+  let usersRepository: Repository<User>
+
   beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     }).compile();
-
+    
     app = module.createNestApplication();
+    usersRepository = module.get<Repository<User>>(getRepositoryToken(User))
     await app.init();
   });
 
@@ -37,7 +41,6 @@ describe('UserModule (e2e)', () => {
   });
 
   describe('createAccount', () => {
-
     it('should create account', () => {
       return request(app.getHttpServer()).post(GRAPHQL_ENDPOINT).send({
         query: `
@@ -104,7 +107,7 @@ describe('UserModule (e2e)', () => {
         expect(login.ok).toBe(true)
         expect(login.error).toBe(null)
         expect(login.token).toEqual(expect.any(String))
-        let jwtToken = login.token
+        jwtToken = login.token
       })
     })
     it('should not be able to login with wrong credentials', () => {
@@ -131,7 +134,58 @@ describe('UserModule (e2e)', () => {
       })
     })
   })
-  it.todo('userProfile')
+  describe('userProfile', () => {
+    let userId: number
+
+    beforeAll(async() => {
+      const [User] =await usersRepository.find()
+      userId = User.id
+    })
+    it("should find user's profile", () => {
+      return request(app.getHttpServer()).post(GRAPHQL_ENDPOINT).set('X-JWT', jwtToken).send({
+        query: `
+          {
+            userProfile(userId: ${userId}){
+              ok
+              error
+              user{
+                id
+              }
+            }
+          }
+        `
+      })
+      .expect(200)
+      .expect(res=> {
+        const {body: {data: {userProfile: {ok, error, user: {id}}}}} = res
+        expect(ok).toBe(true)
+        expect(error).toBe(null)
+        expect(id).toBe(userId)
+      })
+    })
+    it("should not found a profile", () => {
+      return request(app.getHttpServer()).post(GRAPHQL_ENDPOINT).set('X-JWT', jwtToken).send({
+        query: `
+          {
+            userProfile(userId: 123){
+              ok
+              error
+              user{
+                id
+              }
+            }
+          }
+        `
+      })
+      .expect(200)
+      .expect(res=> {
+        const {body: {data: {userProfile: {ok, error, user}}}} = res
+        expect(ok).toBe(false)
+        expect(error).toBe("사용자가 존재하지 않습니다.")
+        expect(user).toBe(null)
+      })
+    })
+  })
   it.todo('me')
   it.todo('vertifyEmail')
   it.todo('editProfile')
