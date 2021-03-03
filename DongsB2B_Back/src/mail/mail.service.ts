@@ -22,7 +22,6 @@ export class MailService {
     emailVars.forEach(eVar => form.append(`v:${eVar.key}`, eVar.value));
     try {
       await got.post(`https://api.mailgun.net/v3/${this.options.domain}/messages`, {
-        method: 'POST',
         headers: {
           Authorization: `Basic ${Buffer.from(
             `api:${this.options.apiKey}`,

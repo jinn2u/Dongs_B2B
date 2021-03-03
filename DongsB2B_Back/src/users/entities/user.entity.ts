@@ -1,9 +1,9 @@
 import { Field, InputType, ObjectType, registerEnumType } from "@nestjs/graphql";
-import { CoreEntity } from "src/common/entities/core.entity";
 import { BeforeInsert, BeforeUpdate, Column, Entity } from "typeorm";
 import * as bcrypt from "bcrypt"
 import { InternalServerErrorException } from "@nestjs/common";
 import { IsEmail, IsEnum } from "class-validator";
+import { CoreEntity } from "src/common/entities/core.entity";
 
 enum UserRole{
     Owner,
