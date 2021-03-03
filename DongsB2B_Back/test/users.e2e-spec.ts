@@ -7,6 +7,7 @@ import { parseSelectionSet } from 'graphql-tools';
 import { StringDecoder } from 'string_decoder';
 import { User } from 'src/users/entities/user.entity';
 import { getRepositoryToken } from '@nestjs/typeorm';
+import { Vertification } from 'src/users/entities/vertification.entity';
 
 const GRAPHQL_ENDPOINT = '/graphql'
 const testUser = {
@@ -24,6 +25,7 @@ describe('UserModule (e2e)', () => {
   let app: INestApplication;
   let jwtToken: string
   let usersRepository: Repository<User>
+  let vertificationRepository: Repository<Vertification>
 
   beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -32,6 +34,8 @@ describe('UserModule (e2e)', () => {
     
     app = module.createNestApplication();
     usersRepository = module.get<Repository<User>>(getRepositoryToken(User))
+    vertificationRepository = module.get<Repository<Vertification>>(getRepositoryToken(Vertification))
+
     await app.init();
   });
 
@@ -222,6 +226,91 @@ describe('UserModule (e2e)', () => {
       })
     })
   })
-  it.todo('vertifyEmail')
-  it.todo('editProfile')
+  describe('editProfile', () => {
+    const NEW_EMAIL = 'new Email@google.com'
+    it('should change email', () => {
+      return request(app.getHttpServer()).post(GRAPHQL_ENDPOINT).set('X-JWT', jwtToken).send({
+        query: `
+          mutation{
+            editProfile(input: {
+              email: "${NEW_EMAIL}"
+            }){
+              ok
+              error
+            }
+          }
+        `
+      })
+      .expect(200)
+      .expect(res => {
+        const {body: {data: {editProfile: {ok, error}}}} = res
+        expect(ok).toBe(true)
+        expect(error).toBe(null) 
+      })
+    })
+    it('should have new email', () => {
+      return request(app.getHttpServer()).post(GRAPHQL_ENDPOINT).set('X-JWT', jwtToken).send({
+        query: `
+        {
+          me {
+            email
+          }
+        }
+      `
+      })
+      .expect(200) 
+      .expect(res => {
+        const {body: {data: {me: {email}}}} = res
+        expect(email).toBe(NEW_EMAIL)
+      })
+    })
+  })
+  describe('vertifyEmail', () => {
+    let vertificationCode: string
+    beforeAll(async () => {
+      const [vertification] = await vertificationRepository.find()
+      vertificationCode = vertification.code
+    })
+    it("should vertify email", () => {
+      return request(app.getHttpServer()).post(GRAPHQL_ENDPOINT).set('X-JWT', jwtToken).send({
+        query: `
+          mutation{
+            vertifyEmail(input:{
+              code: "${vertificationCode}"
+            }){
+              ok
+              error
+            }
+          }
+        `
+      })
+      .expect(200)
+      .expect(res => {
+        const {body: {data: {vertifyEmail: {ok, error}}}} = res
+        expect(ok).toBe(true)
+        expect(error).toBe(null)
+      })
+    })
+
+    it("should fail on wrong vertification code", () => {
+      return request(app.getHttpServer()).post(GRAPHQL_ENDPOINT).set('X-JWT', jwtToken).send({
+        query: `
+          mutation{
+            vertifyEmail(input:{
+              code: "wrong"
+            }){
+              ok
+              error
+            }
+          }
+        `
+      })
+      .expect(200)
+      .expect(res => {
+        const {body: {data: {vertifyEmail: {ok, error}}}} = res
+        expect(ok).toBe(false)
+        expect(error).toBe("올바른 인증이 아닙니다.")
+      })
+    })
+  })
 });

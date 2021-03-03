@@ -77,6 +77,7 @@ export class UserService {
             if(email){
                 user.email = email
                 user.vertified = false //이메일을 변경한다면 다시 메일 인증을 받도록한다.
+                await this.vertifications.delete({user: {id: user.id}})
                 const vertification = await this.vertifications.save(this.vertifications.create({user}))
                 this.mailService.sendVerificationEmail(user.email,vertification.code)
         }
@@ -86,6 +87,7 @@ export class UserService {
             await this.users.save(user)
             return {ok: true}
         }catch(e){
+            console.error(e)
           return { ok: false, error: "프로필을 업데이트할 수 없습니다."};
         }
     }
