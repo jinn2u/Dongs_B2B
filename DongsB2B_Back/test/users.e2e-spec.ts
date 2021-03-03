@@ -10,8 +10,8 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 
 const GRAPHQL_ENDPOINT = '/graphql'
 const testUser = {
-  EMAIL : "bsybear623@gmail.com",
-  PASSWORD : "12345"
+  email : "bsybear623@gmail.com",
+  password : "12345"
 }
 
 jest.mock("got", () => {
@@ -46,8 +46,8 @@ describe('UserModule (e2e)', () => {
         query: `
           mutation {
             createAccount(input: {
-              email:"${testUser.EMAIL}",
-              password:"${testUser.PASSWORD}",
+              email:"${testUser.email}",
+              password:"${testUser.password}",
               role:Owner
             }) {
               ok
@@ -67,8 +67,8 @@ describe('UserModule (e2e)', () => {
         query: `
           mutation {
             createAccount(input: {
-              email:"${testUser.EMAIL}",
-              password:"${testUser.PASSWORD}",
+              email:"${testUser.email}",
+              password:"${testUser.password}",
               role:Owner
             }) {
               ok
@@ -91,8 +91,8 @@ describe('UserModule (e2e)', () => {
         query: `
           mutation{
             login(input: {
-              email:"${testUser.EMAIL}",
-              password:"${testUser.PASSWORD}",
+              email:"${testUser.email}",
+              password:"${testUser.password}",
             }){
               ok
               error
@@ -115,7 +115,7 @@ describe('UserModule (e2e)', () => {
         query: `
           mutation{
             login(input: {
-              email:"${testUser.EMAIL}",
+              email:"${testUser.email}",
               password: "asdf",
             }){
               ok
@@ -186,7 +186,42 @@ describe('UserModule (e2e)', () => {
       })
     })
   })
-  it.todo('me')
+
+  describe('me', () => {
+    it("should find my profile", () => {
+      return request(app.getHttpServer()).post(GRAPHQL_ENDPOINT).set('X-JWT', jwtToken).send({
+        query: `
+          {
+            me {
+              email
+            }
+          }
+        `
+      })
+      .expect(200)
+      .expect(res => {
+        const {body: {data: {me: {email}}}} = res
+        expect(email).toBe(testUser.email)
+      })
+    })
+    it("should not allow logged out user", () => {
+      return request(app.getHttpServer()).post(GRAPHQL_ENDPOINT).send({
+        query: `
+          {
+            me {
+              email
+            }
+          }
+        `
+      })
+      .expect(200)
+      .expect(res => {
+        const {body: {errors}} = res
+        const [error] = errors
+        expect(error.message).toBe('Forbidden resource')
+      })
+    })
+  })
   it.todo('vertifyEmail')
   it.todo('editProfile')
 });
