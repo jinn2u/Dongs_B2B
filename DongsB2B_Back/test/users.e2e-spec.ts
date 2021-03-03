@@ -3,16 +3,25 @@ import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { getConnection } from 'typeorm';
+import { parseSelectionSet } from 'graphql-tools';
+import { StringDecoder } from 'string_decoder';
 
 const GRAPHQL_ENDPOINT = '/graphql'
+const testUser = {
+  EMAIL : "bsybear623@gmail.com",
+  PASSWORD : "12345"
+}
+
 jest.mock("got", () => {
   return{
     post: jest.fn()
   }
 })
+
 describe('UserModule (e2e)', () => {
   let app: INestApplication;
-
+  let jwtToken: string
+  
   beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
@@ -28,15 +37,14 @@ describe('UserModule (e2e)', () => {
   });
 
   describe('createAccount', () => {
-    const EMAIL = "bsybear623@gmail.com"
 
     it('should create account', () => {
       return request(app.getHttpServer()).post(GRAPHQL_ENDPOINT).send({
         query: `
           mutation {
             createAccount(input: {
-              email:"${EMAIL}",
-              password:"12345",
+              email:"${testUser.EMAIL}",
+              password:"${testUser.PASSWORD}",
               role:Owner
             }) {
               ok
@@ -56,8 +64,8 @@ describe('UserModule (e2e)', () => {
         query: `
           mutation {
             createAccount(input: {
-              email:"${EMAIL}",
-              password:"12345",
+              email:"${testUser.EMAIL}",
+              password:"${testUser.PASSWORD}",
               role:Owner
             }) {
               ok
@@ -73,8 +81,57 @@ describe('UserModule (e2e)', () => {
       })
     })
   })
+
+  describe('login', () => {
+    it('should login with correct credentials', () => {
+      return request(app.getHttpServer()).post(GRAPHQL_ENDPOINT).send({
+        query: `
+          mutation{
+            login(input: {
+              email:"${testUser.EMAIL}",
+              password:"${testUser.PASSWORD}",
+            }){
+              ok
+              error
+              token
+            }
+          }
+        `
+      })
+      .expect(200)
+      .expect(res => {
+        const {body: {data: {login}}} = res
+        expect(login.ok).toBe(true)
+        expect(login.error).toBe(null)
+        expect(login.token).toEqual(expect.any(String))
+        let jwtToken = login.token
+      })
+    })
+    it('should not be able to login with wrong credentials', () => {
+      return request(app.getHttpServer()).post(GRAPHQL_ENDPOINT).send({
+        query: `
+          mutation{
+            login(input: {
+              email:"${testUser.EMAIL}",
+              password: "asdf",
+            }){
+              ok
+              error
+              token
+            }
+          }
+        `
+      })
+      .expect(200)
+      .expect(res => {
+        const {body: {data: {login}}} = res
+        expect(login.ok).toBe(false)
+        expect(login.error).toBe("비밀번호가 잘못되었습니다.")
+        expect(login.token).toBe(null)
+      })
+    })
+  })
   it.todo('userProfile')
-  it.todo('login')
   it.todo('me')
   it.todo('vertifyEmail')
   it.todo('editProfile')

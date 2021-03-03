@@ -21,7 +21,7 @@ export class UserResolver{
         return this.userService.createAccount(createAccountInput)
     }
     // 로그인
-    @Query(()=> LoginOutput)
+    @Mutation(()=> LoginOutput)
     async login(@Args('input') loginInput: LoginInput): Promise<LoginOutput>{
         return this.userService.login(loginInput)
     }
