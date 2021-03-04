@@ -94,6 +94,7 @@ export class UserService {
     async vertifyEmail(code: string): Promise<VertifyEmailOutput>{
         try{
             const vertification = await this.vertifications.findOne({code},{relations: ['user']})
+            console.log(vertification)
             if(vertification){
                 vertification.user.vertified = true
                 await this.users.save(vertification.user)

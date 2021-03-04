@@ -6,10 +6,10 @@ import { IsBoolean, IsEmail, IsEnum, IsString } from "class-validator";
 import { CoreEntity } from "src/common/entities/core.entity";
 import { Restaurant } from "src/restaurants/entities/restaurant.entity";
 
-enum UserRole{
-    Owner,
-    Client,
-    Delivrey
+export enum UserRole{
+    Owner = "Owner",
+    Client = "Client",
+    Delivrey = "Delivrey"
 }
 
 registerEnumType(UserRole, {name: "UserRole"})

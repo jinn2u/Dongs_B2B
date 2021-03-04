@@ -16,13 +16,12 @@ export class Restaurant extends CoreEntity{
     @Field(()=> String)
     @Column()
     @IsString()
-    @Length(5)
     name: string
     
     @Field(()=> String)
     @Column()
     @IsString()
-    coverImage: string 
+    coverImg: string 
 
     @Field(()=> String)
     @Column()
@@ -41,7 +40,7 @@ export class Restaurant extends CoreEntity{
     @ManyToOne(
         ()=>User, 
         user => user.restaurants, 
-        {onDelete: "SET NULL"},
+        {onDelete: "CASCADE"},
     )
     owner: User
 
