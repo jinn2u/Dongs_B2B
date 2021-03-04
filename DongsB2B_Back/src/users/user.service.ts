@@ -19,6 +19,7 @@ export class UserService {
         private readonly jwtService: JwtService,
         private readonly mailService: MailService
     ){}
+    
     async createAccount({email, password, role}: CreateAccountInput): Promise<{ok: boolean, error?: string}>{
         // 새로운 사용자인지 확인한다.
         try{

@@ -3,7 +3,7 @@ import { getRepositoryToken } from "@nestjs/typeorm"
 import { JwtService } from "src/jwt/jwt.service"
 import { MailService } from "src/mail/mail.service"
 import { Repository } from "typeorm"
-import { User } from "./entities/user.entity"
+import { User, UserRole } from "./entities/user.entity"
 import { Vertification } from "./entities/vertification.entity"
 import { UserService } from "./user.service"
 
@@ -70,12 +70,13 @@ describe("UserService", () => {
         const createAccountArgs = {
             email: "",
             password: "" ,
-            role: 0
+            role: UserRole.Owner
         }
         it('should fail if user exists', async () => {
             usersRepository.findOne.mockResolvedValue({
                 id:1,
-                email: 'asdf'
+                email: 'asdf',
+                role: ""
             })
             const result = await service.createAccount(createAccountArgs)
             expect(result).toMatchObject({ok: false, error: "이메일을 가지고 있는 사용자가 존재합니다."})
