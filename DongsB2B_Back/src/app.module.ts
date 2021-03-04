@@ -10,6 +10,9 @@ import { JwtMiddleware } from './jwt/jwt.middleware';
 import { AuthModule } from './auth/auth.module';
 import { Vertification } from './users/entities/vertification.entity';
 import { MailModule } from './mail/mail.module';
+import { Restaurant } from './restaurants/entities/restaurant.entity';
+import { Category } from './restaurants/entities/category.entity';
+import { RestaurantsModule } from './restaurants/restaurants.module';
 
 
 @Module({
@@ -40,7 +43,7 @@ import { MailModule } from './mail/mail.module';
       database: process.env.DB_NAME,
       synchronize: process.env.NODE_ENV !== 'prod',
       logging: process.env.NODE_ENV !== 'prod' && process.env.NODE_ENV !== 'test',
-      entities: [User, Vertification],
+      entities: [User, Vertification, Restaurant, Category],
     }),
      GraphQLModule.forRoot({
        autoSchemaFile: true,
@@ -57,6 +60,7 @@ import { MailModule } from './mail/mail.module';
      UsersModule,
      AuthModule,
      MailModule,
+     RestaurantsModule,
    ],
   controllers: [],
   providers: [],
