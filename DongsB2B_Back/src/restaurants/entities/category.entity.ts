@@ -32,4 +32,5 @@ export class Category  extends CoreEntity{
     @Column({unique: true})
     @IsString()
     slug: string
+    
 }
