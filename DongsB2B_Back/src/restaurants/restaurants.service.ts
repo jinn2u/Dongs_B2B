@@ -16,16 +16,15 @@ export class RestaurantService{
         private readonly categories: CategoryRepository
     ){}
 
-
-     
     async createRestaurant(
         owner: User,
         createRestaurantInput: CreateRestaurantInput): Promise<CreateRestaurantOutput>{
         try{
             const newRestaurant = this.restaurants.create(createRestaurantInput)
             newRestaurant.owner = owner
-            const category = await this.categories.getOrCreate(createRestaurantInput.categoryname)
+            const category = await this.categories.getOrCreate(createRestaurantInput.categoryName)
             newRestaurant.category = category
+            await this.restaurants.save(newRestaurant);
             return{ok: true}
         }catch{
             return { ok: false, error: '식당을 생성할 수 없습니다.'}
@@ -33,7 +32,7 @@ export class RestaurantService{
     }
     async editRestaurant(owner: User, editRestaurantInput: EditRestaurantInput): Promise<EditRestaurantOutput>{
         try{
-            const restaurant = await this.restaurants.findOne(editRestaurantInput.restaurantId, {loadRelationIds: true})
+            const restaurant = await this.restaurants.findOne(editRestaurantInput.restaurantId)
             if(!restaurant){
                 return {
                     ok: false,
@@ -46,13 +45,19 @@ export class RestaurantService{
                     error: "소유하고 식당이 아니므로 수정할 수 없습니다."
                 }
             }
+            let category: Category = null
+            if(editRestaurantInput.categoryName){
+                category = await this.categories.getOrCreate(editRestaurantInput.categoryName)
+            }
+            await this.restaurants.save([{
+                id:editRestaurantInput.restaurantId,
+                ...editRestaurantInput,
+                ...(category && {category})
+            }])
+            return { ok: true }
         }catch(e){
             console.error(e)
-            return{
-                ok:false,
-                error: '식당을 수정할수 없습니다.'
-            }
+            return{ ok:false, error: '식당을 수정할수 없습니다.' }
         }
     }
-
 }
