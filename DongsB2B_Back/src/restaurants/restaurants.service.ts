@@ -3,6 +3,7 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { User } from "src/users/entities/user.entity";
 import { Repository } from "typeorm";
 import { CreateRestaurantInput, CreateRestaurantOutput } from "./dtos/createRestaurant.dto";
+import { DeleteRestaurantInput, DeleteRestaurantOutput } from "./dtos/deleteRestaurant.dto";
 import { EditRestaurantInput, EditRestaurantOutput } from "./dtos/editRestaurant.dto";
 import { Category } from "./entities/category.entity";
 import { Restaurant } from "./entities/restaurant.entity";
@@ -58,6 +59,29 @@ export class RestaurantService{
         }catch(e){
             console.error(e)
             return{ ok:false, error: '식당을 수정할수 없습니다.' }
+        }
+    }
+
+    async deleteRestaurant(owner: User, {restaurantId}: DeleteRestaurantInput): Promise<DeleteRestaurantOutput>{
+        try{
+            const restaurant = await this.restaurants.findOne(restaurantId)
+            if(!restaurant){
+                return {
+                    ok: false,
+                    error: "해당하는 식당이 존재하지 않습니다."
+                }
+            }
+            if(owner.id !== restaurant.ownerId){
+                return {
+                    ok: false,
+                    error: "소유하고 식당이 아니므로 수정할 수 없습니다."
+                }
+            }
+            await this.restaurants.delete(restaurantId)
+            return{ ok: true}
+        }catch(e){
+            console.error(e)
+            return{ ok: false,  error: "식당을 삭제할 수 없습니다." }
         }
     }
 }

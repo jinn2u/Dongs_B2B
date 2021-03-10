@@ -4,6 +4,7 @@ import { AuthUser } from "src/auth/auth-user.decorator";
 import { Role } from "src/auth/role.decorator";
 import { User, UserRole } from "src/users/entities/user.entity";
 import { CreateRestaurantInput, CreateRestaurantOutput } from "./dtos/createRestaurant.dto";
+import { DeleteRestaurantInput, DeleteRestaurantOutput } from "./dtos/deleteRestaurant.dto";
 import { EditRestaurantInput, EditRestaurantOutput } from "./dtos/editRestaurant.dto";
 import { Restaurant } from "./entities/restaurant.entity";
 import { RestaurantService } from "./restaurants.service";
@@ -13,7 +14,7 @@ export class RestaurantsResolver{
     constructor(
         private readonly restaurantService: RestaurantService
     ){}
-
+    // 식당 추가하기
     @Mutation(()=> CreateRestaurantOutput)
     @Role(['Owner'])
     async createRestaurant( 
@@ -23,6 +24,7 @@ export class RestaurantsResolver{
         return this.restaurantService.createRestaurant(authUser, createRestaurantInput)
     }
 
+    // 식당정보 수정하기
     @Mutation(()=> EditRestaurantOutput)
     @Role(['Owner'])
     editRestaurant(
@@ -30,5 +32,15 @@ export class RestaurantsResolver{
         @Args('input') editRestaurantInput: EditRestaurantInput
     ): Promise<EditRestaurantOutput> {
         return this.restaurantService.editRestaurant(owner, editRestaurantInput)
+    }
+
+    // 식당 삭제하기
+    @Mutation(()=> DeleteRestaurantOutput)
+    @Role(['Owner'])
+    deleteRestaurant(
+        @AuthUser() owner: User,
+        @Args('input') deleteRestaurantInput: DeleteRestaurantInput
+    ): Promise<DeleteRestaurantOutput> {
+        return this.restaurantService.deleteRestaurant(owner, deleteRestaurantInput)
     }
 }
