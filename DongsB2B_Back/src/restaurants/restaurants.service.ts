@@ -2,6 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { User } from "src/users/entities/user.entity";
 import { Repository } from "typeorm";
+import { AllCategoriesOutput } from "./dtos/allCategories.dto";
 import { CreateRestaurantInput, CreateRestaurantOutput } from "./dtos/createRestaurant.dto";
 import { DeleteRestaurantInput, DeleteRestaurantOutput } from "./dtos/deleteRestaurant.dto";
 import { EditRestaurantInput, EditRestaurantOutput } from "./dtos/editRestaurant.dto";
@@ -83,5 +84,17 @@ export class RestaurantService{
             console.error(e)
             return{ ok: false,  error: "식당을 삭제할 수 없습니다." }
         }
+    }
+
+    async allCategories(): Promise<AllCategoriesOutput>{
+        try{
+            const categories = await this.categories.find()
+            return{ok: true, categories}
+        }catch{
+            return{ ok:false, error:"카테고리를 로딩할 수 없습니다."}
+        }
+    }
+    countRestaurants(category: Category){
+        return this.restaurants.count({category})
     }
 }
