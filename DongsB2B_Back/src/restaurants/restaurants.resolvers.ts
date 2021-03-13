@@ -1,10 +1,9 @@
-import { SetMetadata } from "@nestjs/common";
 import { Args, Mutation, Parent, Query, ResolveField, Resolver } from "@nestjs/graphql";
-import { connectableObservableDescriptor } from "rxjs/internal/observable/ConnectableObservable";
 import { AuthUser } from "src/auth/auth-user.decorator";
 import { Role } from "src/auth/role.decorator";
-import { User, UserRole } from "src/users/entities/user.entity";
+import { User } from "src/users/entities/user.entity";
 import { AllCategoriesOutput } from "./dtos/allCategories.dto";
+import { CategoryInput, CategoryOutput } from "./dtos/category.dto";
 import { CreateRestaurantInput, CreateRestaurantOutput } from "./dtos/createRestaurant.dto";
 import { DeleteRestaurantInput, DeleteRestaurantOutput } from "./dtos/deleteRestaurant.dto";
 import { EditRestaurantInput, EditRestaurantOutput } from "./dtos/editRestaurant.dto";
@@ -64,4 +63,8 @@ export class CategoryResolver{
         return this.restaurantService.allCategories()
     }
 
+    @Query(()=> CategoryOutput)
+    category(@Args() categoryInput:CategoryInput): Promise<CategoryOutput>{
+        return this.restaurantService.findCategoryBySlug(categoryInput)
+    }
 }
