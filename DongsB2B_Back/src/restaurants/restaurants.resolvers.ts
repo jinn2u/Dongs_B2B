@@ -61,7 +61,7 @@ export class CategoryResolver{
     }
     //slug로 카테고리 찾기
     @Query(()=> CategoryOutput)
-    category(@Args() categoryInput:CategoryInput): Promise<CategoryOutput>{
+    category(@Args('input') categoryInput:CategoryInput): Promise<CategoryOutput>{
         return this.restaurantService.findCategoryBySlug(categoryInput)
     }
 }
