@@ -25,7 +25,6 @@ export class RestaurantsResolver{
     ): Promise<CreateRestaurantOutput> { 
         return this.restaurantService.createRestaurant(authUser, createRestaurantInput)
     }
-
     // 식당정보 수정하기
     @Mutation(()=> EditRestaurantOutput)
     @Role(['Owner'])
@@ -35,7 +34,6 @@ export class RestaurantsResolver{
     ): Promise<EditRestaurantOutput> {
         return this.restaurantService.editRestaurant(owner, editRestaurantInput)
     }
-
     // 식당 삭제하기
     @Mutation(()=> DeleteRestaurantOutput)
     @Role(['Owner'])
@@ -47,7 +45,6 @@ export class RestaurantsResolver{
     }
 }
 
-
 @Resolver(()=> Category)
 export class CategoryResolver{
     constructor (private readonly restaurantService:RestaurantService){}
@@ -57,12 +54,12 @@ export class CategoryResolver{
         console.log(category)
         return this.restaurantService.countRestaurants(category)
     }
-
+    //모든 카테고리 조회
     @Query(()=> AllCategoriesOutput)
-    allCategoreis():Promise<AllCategoriesOutput>{
+    allCategories():Promise<AllCategoriesOutput>{
         return this.restaurantService.allCategories()
     }
-
+    //slug로 카테고리 찾기
     @Query(()=> CategoryOutput)
     category(@Args() categoryInput:CategoryInput): Promise<CategoryOutput>{
         return this.restaurantService.findCategoryBySlug(categoryInput)

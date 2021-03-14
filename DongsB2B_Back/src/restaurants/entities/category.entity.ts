@@ -9,9 +9,6 @@ import { Restaurant } from "./restaurant.entity";
 @ObjectType()
 @Entity()
 export class Category  extends CoreEntity{
-    @PrimaryGeneratedColumn()
-    @Field(()=>Number)
-    id: number
 
     @Field(()=> String)
     @Column({unique: true})
@@ -24,7 +21,7 @@ export class Category  extends CoreEntity{
     @IsString()
     coverImage: string
 
-    @Field(()=> Restaurant)
+    @Field(()=> [Restaurant])
     @OneToMany(()=> Restaurant, restaurant => restaurant.category)
     restaurants: Restaurant[]
 
@@ -34,3 +31,5 @@ export class Category  extends CoreEntity{
     slug: string
     
 }
+
+
