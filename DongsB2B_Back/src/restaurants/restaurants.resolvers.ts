@@ -4,6 +4,7 @@ import { Role } from "src/auth/role.decorator";
 import { User } from "src/users/entities/user.entity";
 import { AllCategoriesOutput } from "./dtos/allCategories.dto";
 import { CategoryInput, CategoryOutput } from "./dtos/category.dto";
+import { CreateDishInput, CreateDishOutput } from "./dtos/createDish.dto";
 import { CreateRestaurantInput, CreateRestaurantOutput } from "./dtos/createRestaurant.dto";
 import { DeleteRestaurantInput, DeleteRestaurantOutput } from "./dtos/deleteRestaurant.dto";
 import { EditRestaurantInput, EditRestaurantOutput } from "./dtos/editRestaurant.dto";
@@ -11,14 +12,13 @@ import { RestaurantInput, RestaurantOutput } from "./dtos/restaurant.dto";
 import {  RestaurantsInput, RestaurantsOutput } from "./dtos/restaurants.dto";
 import { SearchRestaurantInput, SearchRestaurantOutput } from "./dtos/searchRestaurant.dto";
 import { Category } from "./entities/category.entity";
+import { Dish } from "./entities/dish.entity";
 import { Restaurant } from "./entities/restaurant.entity";
 import { RestaurantService } from "./restaurants.service";
 
 @Resolver(()=>Restaurant)
 export class RestaurantsResolver{
-    constructor(
-        private readonly restaurantService: RestaurantService
-    ){}
+    constructor(private readonly restaurantService: RestaurantService){}
     // 식당 추가하기
     @Mutation(()=> CreateRestaurantOutput)
     @Role(['Owner'])
@@ -82,6 +82,16 @@ export class CategoryResolver{
     category(@Args('input') categoryInput:CategoryInput): Promise<CategoryOutput>{
         return this.restaurantService.findCategoryBySlug(categoryInput)
     }
+}
 
+@Resolver(()=> Dish)
+export class DishResolver{
+    constructor(private readonly restaurantService: RestaurantService){}
+
+    @Mutation(()=>CreateDishOutput)
+    @Role(['Owner'])
+    createDish(@AuthUser()owner: User, @Args('input')createDishInput: CreateDishInput): Promise<CreateDishOutput>{
+        return this.restaurantService.createDish(owner, createDishInput)
+    }
 
 }

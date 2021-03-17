@@ -1,9 +1,10 @@
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { User } from "src/users/entities/user.entity";
-import { Like, Raw, Repository } from "typeorm";
+import { Raw, Repository } from "typeorm";
 import { AllCategoriesOutput } from "./dtos/allCategories.dto";
 import { CategoryInput, CategoryOutput } from "./dtos/category.dto";
+import { CreateDishInput, CreateDishOutput } from "./dtos/createDish.dto";
 import { CreateRestaurantInput, CreateRestaurantOutput } from "./dtos/createRestaurant.dto";
 import { DeleteRestaurantInput, DeleteRestaurantOutput } from "./dtos/deleteRestaurant.dto";
 import { EditRestaurantInput, EditRestaurantOutput } from "./dtos/editRestaurant.dto";
@@ -11,6 +12,7 @@ import { RestaurantInput, RestaurantOutput } from "./dtos/restaurant.dto";
 import { RestaurantsInput, RestaurantsOutput } from "./dtos/restaurants.dto";
 import { SearchRestaurantInput, SearchRestaurantOutput } from "./dtos/searchRestaurant.dto";
 import { Category } from "./entities/category.entity";
+import { Dish } from "./entities/dish.entity";
 import { Restaurant } from "./entities/restaurant.entity";
 import { CategoryRepository } from "./repositories/category.repository";
 
@@ -19,7 +21,10 @@ export class RestaurantService{
     constructor(
         @InjectRepository(Restaurant) 
         private readonly restaurants: Repository<Restaurant>,
+        @InjectRepository(Dish) 
+        private readonly dishes:Repository <Dish>,
         private readonly categories: CategoryRepository
+
     ){}
 
     async createRestaurant(
@@ -134,7 +139,7 @@ export class RestaurantService{
 
     async findRestaurantById({restaurantId}: RestaurantInput): Promise<RestaurantOutput>{
         try{
-            const restaurant = await this.restaurants.findOne(restaurantId)
+            const restaurant = await this.restaurants.findOne(restaurantId, {relations: ['menu']})
             if(!restaurant){
                 return { ok: false, error: '식당을 찾을 수 없습니다.'}
             }
@@ -152,6 +157,23 @@ export class RestaurantService{
         }catch(e){
             console.error(e)
             return{ ok: false, error: '식당이 존재하지 않습니다.'} 
+        }
+    }
+    async createDish(owner: User, createDishInput: CreateDishInput): Promise<CreateDishOutput>{
+        try{
+            const restaurant = await this.restaurants.findOne(createDishInput.restaurantId)
+            if(!restaurant){
+                return {ok: false, error: "식당을 찾을 수 없습니다."}
+            }
+            if(owner.id !== restaurant.ownerId){
+                return {ok: false, error: "잘못된 접근입니다."}
+            }
+            const dish = await this.dishes.save(this.dishes.create({...createDishInput, restaurant}))
+            console.log(dish)
+            return { ok: true}
+        }catch(e){
+            console.error(e)
+            return { ok: false, error: "잘못된 접근입니다."}
         }
     }
 }
