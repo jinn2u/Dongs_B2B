@@ -10,5 +10,8 @@ export class PaginationInput{
 @ObjectType()
 export class PaginationOutput extends CoreOutput{
     @Field(()=> Int, {nullable:true})
-    totalPages?: number
+    totalPages?: number 
+    
+    @Field(()=> Int, {nullable:true})
+    totalResults?: number
 }
