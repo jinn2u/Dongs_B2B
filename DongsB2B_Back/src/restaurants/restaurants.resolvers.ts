@@ -6,7 +6,9 @@ import { AllCategoriesOutput } from "./dtos/allCategories.dto";
 import { CategoryInput, CategoryOutput } from "./dtos/category.dto";
 import { CreateDishInput, CreateDishOutput } from "./dtos/createDish.dto";
 import { CreateRestaurantInput, CreateRestaurantOutput } from "./dtos/createRestaurant.dto";
+import { DeleteDishInput, DeleteDishOutput } from "./dtos/deleteDish.dto";
 import { DeleteRestaurantInput, DeleteRestaurantOutput } from "./dtos/deleteRestaurant.dto";
+import { EditDishInput, EditDishOutput } from "./dtos/editDish.dto";
 import { EditRestaurantInput, EditRestaurantOutput } from "./dtos/editRestaurant.dto";
 import { RestaurantInput, RestaurantOutput } from "./dtos/restaurant.dto";
 import {  RestaurantsInput, RestaurantsOutput } from "./dtos/restaurants.dto";
@@ -88,10 +90,22 @@ export class CategoryResolver{
 export class DishResolver{
     constructor(private readonly restaurantService: RestaurantService){}
 
+    // 메뉴 만들기
     @Mutation(()=>CreateDishOutput)
     @Role(['Owner'])
     createDish(@AuthUser()owner: User, @Args('input')createDishInput: CreateDishInput): Promise<CreateDishOutput>{
         return this.restaurantService.createDish(owner, createDishInput)
     }
-
+    //메뉴 수정하기
+    @Mutation(()=>EditDishOutput)
+    @Role(['Owner'])
+    editDish(@AuthUser()owner: User, @Args('input')editDishInput: EditDishInput): Promise<EditDishOutput>{
+        return this.restaurantService.editDish(owner, editDishInput)
+    }
+    //메뉴 삭제하기
+    @Mutation(()=>DeleteDishOutput)
+    @Role(['Owner'])
+    deleteDish(@AuthUser()owner: User, @Args('input')deleteDishInput: DeleteDishInput): Promise<DeleteDishOutput>{
+        return this.restaurantService.deleteDish(owner, deleteDishInput)
+    }
 }

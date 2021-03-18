@@ -6,7 +6,9 @@ import { AllCategoriesOutput } from "./dtos/allCategories.dto";
 import { CategoryInput, CategoryOutput } from "./dtos/category.dto";
 import { CreateDishInput, CreateDishOutput } from "./dtos/createDish.dto";
 import { CreateRestaurantInput, CreateRestaurantOutput } from "./dtos/createRestaurant.dto";
+import { DeleteDishInput, DeleteDishOutput } from "./dtos/deleteDish.dto";
 import { DeleteRestaurantInput, DeleteRestaurantOutput } from "./dtos/deleteRestaurant.dto";
+import { EditDishInput, EditDishOutput } from "./dtos/editDish.dto";
 import { EditRestaurantInput, EditRestaurantOutput } from "./dtos/editRestaurant.dto";
 import { RestaurantInput, RestaurantOutput } from "./dtos/restaurant.dto";
 import { RestaurantsInput, RestaurantsOutput } from "./dtos/restaurants.dto";
@@ -169,11 +171,43 @@ export class RestaurantService{
                 return {ok: false, error: "잘못된 접근입니다."}
             }
             const dish = await this.dishes.save(this.dishes.create({...createDishInput, restaurant}))
-            console.log(dish)
             return { ok: true}
         }catch(e){
             console.error(e)
             return { ok: false, error: "잘못된 접근입니다."}
+        }
+    }
+    async editDish(owner: User, editDishInput: EditDishInput): Promise<EditDishOutput>{
+        try{
+            const dish = await this.dishes.findOne(editDishInput.dishId, {relations:['restaurant']})
+            if(!dish){
+                return { ok: false, error: '삭제할 메뉴가 존재하지 않습니다.'}
+            }
+            if(dish.restaurant.ownerId !== owner.id){
+                return { ok: false, error: '메뉴를 삭제할 권한인 없습니다.'}
+            }
+            await this.dishes.save({id: editDishInput.dishId, ...editDishInput})
+            // await this.dishes.save([{id: editDishInput.dishId, ...editDishInput}])
+            return { ok: true }
+        }catch(e){
+            console.error(e)
+            return {ok: false}
+        }
+    }
+    async deleteDish(owner: User, {dishId}:DeleteDishInput): Promise<DeleteDishOutput>{
+        try{
+            const dish = await this.dishes.findOne(dishId, {relations:['restaurant']})
+            if(!dish){
+                return { ok: false, error: '삭제할 메뉴가 존재하지 않습니다.'}
+            }
+            if(dish.restaurant.ownerId !== owner.id){
+                return { ok: false, error: '메뉴를 삭제할 권한인 없습니다.'}
+            }
+            await this.dishes.delete(dishId )
+            return { ok: true }
+        }catch(e){
+            console.error(e)
+            return { ok: false, error: '메뉴를 삭제할 수 없습니다.' }
         }
     }
 }
